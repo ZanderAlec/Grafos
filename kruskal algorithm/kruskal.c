@@ -1,6 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
-#include "grafos.h"
+#include "../include/grafos.h"
 
 //Preenche todos os indices de um vetor com 0.
 void zeraVetor(int v[], int tam){
@@ -134,13 +134,14 @@ int main(){
     adicionaVerticeAresta(3,5,6,g);
     adicionaVerticeAresta(4,6,1,g);
 
-    imprimeGrafo(g);
-
     GRAFO * agm = criaGrafo(g->num_verts, g->num_arestas);
 
     agm = encontraAgmKruskal(g, agm);
 
     imprimeGrafo(agm);
+
+    liberaGrafo(agm);
+    liberaGrafo(g);
 
     return 0;
 }

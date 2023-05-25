@@ -174,3 +174,20 @@ void imprimeGrafo(GRAFO * g){
         printf("\n");
     }
 }
+
+void liberaGrafo(GRAFO * g){
+    if(g != NULL){  
+
+        for(int i = 0; i< g->num_verts; i++){
+            
+            while(g->lista_vertices[i].primeiro != NULL){
+                lista_adjacencias * deletando = g->lista_vertices[i].primeiro;
+                g->lista_vertices[i].primeiro = g->lista_vertices[i].primeiro->proximo;
+                free(deletando);
+            }    
+        }
+        
+        free(g->lista_vertices);
+        free(g);
+    }
+}

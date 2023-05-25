@@ -1,7 +1,13 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "grafos.h"
+#include <string.h>
+#include "../include/grafos.h"
 
+struct priori{
+    int valor;
+    int peso;
+    struct priori * prox;
+}prioridade;
 
 //Solicita os valores e preenche o grafo:
 GRAFO * pedeValores(GRAFO * g){
@@ -74,110 +80,216 @@ int procuraMenorPeso(int vertsVisitados[], lista_adjacencias * lista, int *menor
 }
 
 
-//Encontra uma árvore geradora mínima utilizando o algoritmo de prim
-int encontraAGM(GRAFO * g){
+
+
+//Verifica se a url atende todos os requisitos.
+//retorna 1 se atender.
+//Retorna 0 se não atender.
+int verificaUrl(char url[]){
+
+    if(url == NULL){
+        printf("Digite um endereço!\n");
+    }else{
+        for(int i = 0; url[i] != '\0'; i++){
+            if(url[i] == '\\'){
+                return 1;
+            }
+         }
+    }
+
+    return 0;
+}
+
+//lê o arquivo e cria o grafo a partir dele
+GRAFO * criaGrafoArquivo(char urlent[],GRAFO * g){
+
+    int size = 0;
+
+    for(int i = 0; urlent[i] != '\0'; i++){
+       size++;
+    }
     
-    int pesoTotal = 0;
-    int num_verts = g->num_verts;
+    char url[size+1];
 
-    int vertsVisitados[num_verts];
+    memcpy(url, urlent, size+1);
 
-    //Arvore agm
-    int agm[num_verts];
+    FILE * file;
 
-    limpaVetor(agm, num_verts);
-    limpaVetor(vertsVisitados, num_verts);
+    file = fopen(urlent, "r");
 
-    //primeiro indice(raiz), ja é marcado como visitado.
-    vertsVisitados[0] = 1;
-    agm[0] = 0;
-    int verticeAtual = 0;
-    int verticePai = 0;
+    if(file == NULL){
+        printf("Não foi possível abrir o arquivo");
+        return 0;
+    }
+
+    int i, x = 0, y = 0,z = 0;
+    fscanf(file, "%d %d", &x, &i);
+
+    g = criaGrafo(x,y);
+
+    for(int j = 0; j<i+1; j++){
+        if(j == 0){
+
+        }else{
+            fscanf(file, "%d %d %d\n", &x, &y, &z);
+             adicionaVerticeAresta(x,y,z, g);
+        }
+    }
+
+    fclose(file);
+    return g;
+}
+
+// void imprimeGrafoArquivo(char urlSaida[], GRAFO * g){
+//     int size = 0;
+
+//     for(int i = 0; urlSaida[i] != '\0'; i++){
+//        size++;
+//     }
+    
+//     char url[size+1];
+
+//     memcpy(url, urlSaida, size+1);
+
+//     FILE * file;
+
+//     file = fopen(url, "a");
+
+//     if(file == NULL){
+//         printf("Não foi possível abrir o arquivo");
+//         return 0;
+//     }
+
+//     //Imprime o agm
+  
+// }
+
+
+//Encontra uma árvore geradora mínima utilizando o algoritmo de prim
+void algPrim(GRAFO * g, int origem, int pai[]){
+
+    printf("ENTREI NO ALGO\n");
+    
+   int i,j, dest, primeiro, num_verts = g->num_verts;    
+   double menorPeso;
+   double pesoTotal = 0;
+
+   printf("origem: %d\n", origem);
+   
+
+   for(i = 0; i < num_verts; i++){
+        pai[i] = -1;
+   }
+
+    pai[origem-1] = origem-1;
+
+     //--------------até aqui suave
 
     while(1){
 
-        verticePai = verticeAtual;
-        
-        int menorPeso = 0;
-        int verticeMenor = -1; 
+        primeiro = 1;
 
-
-        //A posição do vertice no vetor agm, pode ser não ser a mesma na lista de adjacencia
-        verticeAtual = buscaVertice(verticeAtual+1, g);
-
-        lista_adjacencias * l = g->lista_vertices[verticeAtual].primeiro;
-
-        // //Pega o menor peso, apenas se o vertice que o possui não foi visitado.
-        int retorno = procuraMenorPeso(vertsVisitados, l, &menorPeso, &verticeMenor, 1);
-          
-        //Não conseguiu encontrar nenhum vertice não visitado na lista
-        if(!retorno){
-            int check = 1;
-
-            //procura por vertices não visitados no grafo.
-            for(int i = 0; i < num_verts; i++){
-                if(vertsVisitados[i] == -1){
+        for(int i =0; i < num_verts; i++){
+            //Procura um pai já visitado
+            if(pai[i] != -1){
+                //Percorre os vizinhos do vértice visitado
+                int vertAtual = buscaVertice(i+1, g);
                 
-                    verticeAtual = buscaVertice(i+1, g);
-                    lista_adjacencias * l = g->lista_vertices[verticeAtual].primeiro;
+                lista_adjacencias * lista = g->lista_vertices[vertAtual].primeiro;
 
-                    //pega o menor vertice, sendo ele visitado ou não.
-                    procuraMenorPeso(vertsVisitados, l, &menorPeso, &verticeAtual, 0);
+                while(lista != NULL){
 
-                    verticeAtual -=1;                    
-                    check = 0;
+                    if(pai[lista->valor-1] == -1){
 
-                    break;
-                }   
-            }   
-            
-            //se não há vertices não visitados, encerra o programa.
-            if(check == 1) break;
+                        if(primeiro){
+                            menorPeso = lista->peso;
+                            origem = i;
+                            dest = lista->valor;
+                            primeiro = 0;
 
-            //Vai p/ o vertice que ainda tem filhos não visitados
-            if(check == 0) continue;
-        }
+                        }else{
 
-        pesoTotal += menorPeso;
-        vertsVisitados[verticeMenor-1] = verticeAtual;
-        verticeAtual = verticeMenor-1;
-
-        if(agm[verticeAtual] == -1){
-            agm[verticeAtual] = verticePai;
-        }
-
-    }
-
-    //Imprime o agm
-    for(int i = 0 ; i < num_verts; i++){
-        for(int j = 0; j<num_verts; j++){
-
-            int valor = agm[j];
-
-            if(valor == i && j != i){
-                printf("%d -> %d\n", valor+1, j+1);
+                            if(menorPeso > lista->peso){
+                                menorPeso = lista->peso;
+                                origem = i;
+                                dest = lista->valor;
+                            }
+                        }
+                    }
+                
+                    lista = lista->proximo;
+                }
             }
-                
-        }            
+        }
+        
+        if(primeiro) break;
+        pai[dest-1] = origem;
     }
 
-    printf("peso total: %d\n", pesoTotal);
+    for(i = 0; i < num_verts; i++){
+        printf("(%d,%d) ", pai[i]+1, i+1);
+    }
 
+    printf("\n");
 }
 
-int main(){
-    int num_verts = 0;
-    int num_arestas = 0;
+int main(int argc, char *argv[]){
 
-    printf("Informe o número de vertices e de arestas, respectivamente: ");
-    scanf("%d %d", &num_verts, &num_arestas);
+    int vinicial = 1;
+    char urlEntrada[100], urlSaida[100];
 
-    GRAFO * g = criaGrafo(num_verts, num_arestas);
+    for(int i = 0; i < argc; i++){
+        if(!strcmp(argv[i], "-h")){
+            printf("AYUDA!\n");
+        }
+        if(!strcmp(argv[i], "-o")){
 
-    g = pedeValores(g);
+            if(verificaUrl(argv[i+1])){
+                strcpy(urlSaida,argv[i+1]);
+            }else{
+                printf("O endereço do arquivo deve ser enviada com barras duplas. Ex: \"c:\\\" = \"c:\\\\\"\n");
+                return 0;
+            }
+        }
 
-    imprimeGrafo(g);
+        if(!strcmp(argv[i], "-f")){
+
+            if(verificaUrl(argv[i+1])){
+                strcpy(urlEntrada,argv[i+1]);
+            }else{
+                printf("O endereço do arquivo deve ser enviada com barras duplas. Ex: \"\\\" = \"\\\\\"\n");
+                return 0;
+            }
+        }
+
+        if(!strcmp(argv[i], "-s")){
+            printf("SOLUÇÃO CRESCENTE\n");
+        }
+
+        if(!strcmp(argv[i], "-i")){
+            vinicial =  atoi(argv[i+1]);
+        }
+
+    }
+
+    // char urlEntrada[] = "C:\\Users\\WINDOWS\\Downloads\\Bat1\\instances\\exemp.mtx";
+
+    GRAFO * g = NULL;
+    g = criaGrafoArquivo(urlEntrada, g);
+
+    if(g!=NULL){
+        imprimeGrafo(g);
+
+        int agm[g->num_verts];
+
+        //O vinicial é passado -1 por causa da relação com o vetor agm.
+        //onde agm[0] = 1; agm[1] = 1 etc...
+        algPrim(g,vinicial, agm);
+
+        liberaGrafo(g);
+    }
+
     
-    encontraAGM(g);
+
     return 0;
 }
