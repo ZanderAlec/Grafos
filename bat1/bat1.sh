@@ -1,5 +1,5 @@
 echo "Testando algoritmo de Bellman-Ford"
-for i in instances/*.mtx
+for i in instances/*.txt
 do
 	echo -e "\e[33mInstância $i\e[0m";
 	$dijkstra -f $i > temp;
