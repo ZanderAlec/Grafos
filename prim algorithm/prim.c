@@ -163,7 +163,8 @@ int imprimeGrafoArquivo(char urlSaida[], int agm[], int num_verts, int custo, in
     file = fopen(url, "a");
 
     if(file == NULL){
-        printf("Não foi possível abrir o arquivo");
+        printf("Não foi possível abrir o arquivo\n");
+        printf("Barras '\\' precisam ser duplas. EX: C:\\ = C:\\\\\n");
         return 0;
     }
 

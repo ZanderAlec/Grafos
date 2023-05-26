@@ -228,6 +228,7 @@ int imprimeGrafoArquivo(char urlSaida[], int agm[], int num_verts, int custo, in
 
     if(file == NULL){
         printf("Não foi possível abrir o arquivo");
+        printf("Barras '\\' precisam ser duplas. EX: C:\\ = C:\\\\\n");
         return 0;
     }
 
@@ -301,14 +302,10 @@ int main(int argc, char *argv[]){
 
     if(g!=NULL){
 
-        imprimeGrafo(g);
-
         int agm[g->num_verts];
         int custo = 0;
-        // GRAFO * agm = criaGrafo(g->num_verts, g->num_arestas);
-        // imprimeGrafoArquivo(urlSaida, agm, g->num_verts, custo, crescente);
+
         encontraAgmKruskal(g, agm, &custo);
-        // imprimeGrafo(agm);
 
         imprimeGrafoArquivo(urlSaida, agm, g->num_verts, custo, crescente);
 
