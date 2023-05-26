@@ -1,6 +1,75 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include "../include/grafos.h"
+
+
+//lê o arquivo e cria o grafo a partir dele
+GRAFO * criaGrafoArquivo(char urlent[],GRAFO * g){
+
+    int size = 0;
+
+    for(int i = 0; urlent[i] != '\0'; i++){
+       size++;
+    }
+    
+    char url[size+1];
+
+    memcpy(url, urlent, size+1);
+
+    FILE * file;
+
+    file = fopen(urlent, "r");
+
+    if(file == NULL){
+        printf("Não foi possível abrir o arquivo");
+        return 0;
+    }
+
+    int i, x = 0, y = 0,z = 0;
+    fscanf(file, "%d %d", &x, &i);
+
+    g = criaGrafo(x,y);
+
+    for(int j = 0; j<i+1; j++){
+        if(j == 0){
+
+        }else{
+            fscanf(file, "%d %d %d\n", &x, &y, &z);
+             adicionaVerticeAresta(x,y,z, g);
+        }
+    }
+
+    fclose(file);
+    return g;
+}
+
+//Converte um valor inteiro para string
+char *  convertIntToChar ( int value, char * str )
+{
+    char temp;
+    int i =0;
+    while (value > 0) {
+        int digito = value % 10;
+
+        str[i] = digito + '0';
+        value /= 10;
+        i++;
+
+    }
+   i = 0;
+   int j = strlen(str) - 1;
+
+   while (i < j) {
+      temp = str[i];
+      str[i] = str[j];
+      str[j] = temp;
+      i++;
+      j--;
+   }
+    return str;
+}
+
 
 //Preenche todos os indices de um vetor com 0.
 void zeraVetor(int v[], int tam){
@@ -62,9 +131,20 @@ int existeCaminho(GRAFO * g, int v0, int vi, int percorridos[]){
     return 0;
 }
 
+//Preenche todos os índices do vetor com "-1"
+void limpaVetor(int vet[], int tam){
+    for(int i = 0; i < tam; i++){
+        vet[i] = -1;
+    }
+}
+
 //Encontra a árvore geradora mínima(agm), a partir de um grafo direcionado e conexo
 //Utilizada o algorítmo de kruskal.
-GRAFO * encontraAgmKruskal(GRAFO * g, GRAFO * agm){
+void encontraAgmKruskal(GRAFO * g, int vagm[], int *custo){
+
+    limpaVetor(vagm, g->num_verts);
+
+    GRAFO * agm = criaGrafo(g->num_verts, g->num_arestas);
 
     //Roda até não ter mais vertices não adicionados à agm
     while(1){
@@ -113,35 +193,128 @@ GRAFO * encontraAgmKruskal(GRAFO * g, GRAFO * agm){
             break;
         }
 
+        if(vagm[v2-1] == -1){
+             vagm[v2-1] = v1;
+        }else{
+             vagm[v1-1] = v2;
+        }
+
+        *custo += menorPeso;
+
         //Caso encontrou vertices não visitados adiciona eles à agm:
         adicionaVerticeAresta(v1,v2,menorPeso,agm);
+    }
+
+    liberaGrafo(agm);
+
+}
+
+
+//Recebe um vetor com a agm e escreve num arquivo.
+int imprimeGrafoArquivo(char urlSaida[], int agm[], int num_verts, int custo, int crescente){
+    int size = 0;
+
+    for(int i = 0; urlSaida[i] != '\0'; i++){
+       size++;
+    }
+    
+    char url[size+1];
+
+    memcpy(url, urlSaida, size+1);
+
+    FILE * file;
+
+    file = fopen(url, "a");
+
+    if(file == NULL){
+        printf("Não foi possível abrir o arquivo");
+        return 0;
+    }
+
+    if(crescente){
+
+        for(int i = 0; i < num_verts; i++){
+            for(int j = 0; j<num_verts; j++){
+                if(agm[j] == i){
+                    fprintf(file, "(");
+                    char aresta[2];
+                    convertIntToChar(agm[j], aresta);
+                    fputs(aresta, file);
+                    fprintf(file, ",");
+                    convertIntToChar(j+1, aresta);
+                    fputs(aresta, file);
+                    fprintf(file, ") ");
+                }
+            }
+        }
+    }else{
+        for(int i = 0; i < num_verts; i++){
+            if(agm[i] != -1){
+                fprintf(file, "(");
+                char aresta[2];
+                convertIntToChar(agm[i], aresta);
+                fputs(aresta, file);
+                fprintf(file, ",");
+                convertIntToChar(i+1, aresta);
+                fputs(aresta, file);
+                fprintf(file, ") ");
+            }
+        }
+    }
+
+    char totalCusto[3];
+    convertIntToChar(custo, totalCusto);
+    fprintf(file, "\n");
+    fputs(totalCusto, file);    
+
+    fclose(file);
+    return 0;
+}
+
+int main(int argc, char *argv[]){
+
+    int crescente = 0;
+    char urlEntrada[150], urlSaida[150];
+
+    for(int i = 0; i < argc; i++){
+        if(!strcmp(argv[i], "-h")){
+            printf("-h : mostra o help\n -o <arquivo> : redireciona a saida para o ''arquivo''\n -f <arquivo> : indica o ''arquivo'' que contém o grafo de entrada\n -s : mostra a solução (em ordem crescente)\n -i : vértice inicial (para o algoritmo de Prim)\n");
+        }
+
+        if(!strcmp(argv[i], "-o")){
+                strcpy(urlSaida,argv[i+1]);
+        }
+
+        if(!strcmp(argv[i], "-f")){
+                strcpy(urlEntrada,argv[i+1]);
+        }
+
+        if(!strcmp(argv[i], "-s")){
+            crescente = 1;
+        }
 
     }
 
-    return agm;
-}
 
-int main(){
+    GRAFO * g = NULL;
+    g = criaGrafoArquivo(urlEntrada, g);
 
-    GRAFO * g = criaGrafo(6,8);
+    if(g!=NULL){
 
-    adicionaVerticeAresta(1,2,5,g);
-    adicionaVerticeAresta(1,3,4,g);
-    adicionaVerticeAresta(1,4,2,g);
-    adicionaVerticeAresta(1,6,6,g);
-    adicionaVerticeAresta(2,4,1,g);
-    adicionaVerticeAresta(2,5,7,g);
-    adicionaVerticeAresta(3,5,6,g);
-    adicionaVerticeAresta(4,6,1,g);
+        imprimeGrafo(g);
 
-    GRAFO * agm = criaGrafo(g->num_verts, g->num_arestas);
+        int agm[g->num_verts];
+        int custo = 0;
+        // GRAFO * agm = criaGrafo(g->num_verts, g->num_arestas);
+        // imprimeGrafoArquivo(urlSaida, agm, g->num_verts, custo, crescente);
+        encontraAgmKruskal(g, agm, &custo);
+        // imprimeGrafo(agm);
 
-    agm = encontraAgmKruskal(g, agm);
+        imprimeGrafoArquivo(urlSaida, agm, g->num_verts, custo, crescente);
 
-    imprimeGrafo(agm);
+        liberaGrafo(g);        
+    }
 
-    liberaGrafo(agm);
-    liberaGrafo(g);
 
     return 0;
 }

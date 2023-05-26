@@ -79,27 +79,6 @@ int procuraMenorPeso(int vertsVisitados[], lista_adjacencias * lista, int *menor
     return 1;
 }
 
-
-
-
-//Verifica se a url atende todos os requisitos.
-//retorna 1 se atender.
-//Retorna 0 se não atender.
-int verificaUrl(char url[]){
-
-    if(url == NULL){
-        printf("Digite um endereço!\n");
-    }else{
-        for(int i = 0; url[i] != '\0'; i++){
-            if(url[i] == '\\'){
-                return 1;
-            }
-         }
-    }
-
-    return 0;
-}
-
 //lê o arquivo e cria o grafo a partir dele
 GRAFO * criaGrafoArquivo(char urlent[],GRAFO * g){
 
@@ -140,50 +119,104 @@ GRAFO * criaGrafoArquivo(char urlent[],GRAFO * g){
     return g;
 }
 
-// void imprimeGrafoArquivo(char urlSaida[], GRAFO * g){
-//     int size = 0;
+//Converte um valor inteiro para string
+char *  convertIntToChar ( int value, char * str )
+{
+    char temp;
+    int i =0;
+    while (value > 0) {
+        int digito = value % 10;
 
-//     for(int i = 0; urlSaida[i] != '\0'; i++){
-//        size++;
-//     }
+        str[i] = digito + '0';
+        value /= 10;
+        i++;
+
+    }
+   i = 0;
+   int j = strlen(str) - 1;
+
+   while (i < j) {
+      temp = str[i];
+      str[i] = str[j];
+      str[j] = temp;
+      i++;
+      j--;
+   }
+    return str;
+}
+
+
+//Recebe um vetor com a agm e escreve num arquivo.
+int imprimeGrafoArquivo(char urlSaida[], int agm[], int num_verts, int custo, int crescente){
+    int size = 0;
+
+    for(int i = 0; urlSaida[i] != '\0'; i++){
+       size++;
+    }
     
-//     char url[size+1];
+    char url[size+1];
 
-//     memcpy(url, urlSaida, size+1);
+    memcpy(url, urlSaida, size+1);
 
-//     FILE * file;
+    FILE * file;
 
-//     file = fopen(url, "a");
+    file = fopen(url, "a");
 
-//     if(file == NULL){
-//         printf("Não foi possível abrir o arquivo");
-//         return 0;
-//     }
+    if(file == NULL){
+        printf("Não foi possível abrir o arquivo");
+        return 0;
+    }
 
-//     //Imprime o agm
-  
-// }
+    if(crescente){
+
+        for(int i = 0; i < num_verts; i++){
+            for(int j = 0; j<num_verts; j++){
+                if(agm[j] == i){
+                    fprintf(file, "(");
+                    char aresta[2];
+                    convertIntToChar(i+1, aresta);
+                    fputs(aresta, file);
+                    fprintf(file, ",");
+                    convertIntToChar(j+1, aresta);
+                    fputs(aresta, file);
+                    fprintf(file, ") ");
+                }
+            }
+        }
+    }else{
+        for(int i = 0; i < num_verts; i++){
+            fprintf(file, "(");
+            char aresta[2];
+            convertIntToChar(agm[i]+1, aresta);
+            fputs(aresta, file);
+            fprintf(file, ",");
+            convertIntToChar(i+1, aresta);
+            fputs(aresta, file);
+            fprintf(file, ") ");
+        }
+    }
+
+    char totalCusto[3];
+    convertIntToChar(custo, totalCusto);
+    fprintf(file, "\n");
+    fputs(totalCusto, file);    
+
+    fclose(file);
+    return 0;
+}
 
 
 //Encontra uma árvore geradora mínima utilizando o algoritmo de prim
-void algPrim(GRAFO * g, int origem, int pai[]){
-
-    printf("ENTREI NO ALGO\n");
+void algPrim(GRAFO * g, int origem, int pai[], int *custo){
     
    int i,j, dest, primeiro, num_verts = g->num_verts;    
-   double menorPeso;
-   double pesoTotal = 0;
-
-   printf("origem: %d\n", origem);
-   
+   int menorPeso = 0;   
 
    for(i = 0; i < num_verts; i++){
         pai[i] = -1;
    }
 
     pai[origem-1] = origem-1;
-
-     //--------------até aqui suave
 
     while(1){
 
@@ -219,51 +252,38 @@ void algPrim(GRAFO * g, int origem, int pai[]){
                 
                     lista = lista->proximo;
                 }
+
             }
         }
         
         if(primeiro) break;
         pai[dest-1] = origem;
+        *custo += menorPeso;
     }
 
-    for(i = 0; i < num_verts; i++){
-        printf("(%d,%d) ", pai[i]+1, i+1);
-    }
-
-    printf("\n");
 }
 
 int main(int argc, char *argv[]){
 
-    int vinicial = 1;
-    char urlEntrada[100], urlSaida[100];
+    int vinicial = 1, crescente = 0;
+    char urlEntrada[150];
+    char urlSaida[150];
 
     for(int i = 0; i < argc; i++){
         if(!strcmp(argv[i], "-h")){
-            printf("AYUDA!\n");
+            printf("-h : mostra o help\n -o <arquivo> : redireciona a saida para o ''arquivo''\n -f <arquivo> : indica o ''arquivo'' que contém o grafo de entrada\n -s : mostra a solução (em ordem crescente)\n -i : vértice inicial (para o algoritmo de Prim)\n");
         }
-        if(!strcmp(argv[i], "-o")){
 
-            if(verificaUrl(argv[i+1])){
+        if(!strcmp(argv[i], "-o")){
                 strcpy(urlSaida,argv[i+1]);
-            }else{
-                printf("O endereço do arquivo deve ser enviada com barras duplas. Ex: \"c:\\\" = \"c:\\\\\"\n");
-                return 0;
-            }
         }
 
         if(!strcmp(argv[i], "-f")){
-
-            if(verificaUrl(argv[i+1])){
                 strcpy(urlEntrada,argv[i+1]);
-            }else{
-                printf("O endereço do arquivo deve ser enviada com barras duplas. Ex: \"\\\" = \"\\\\\"\n");
-                return 0;
-            }
         }
 
         if(!strcmp(argv[i], "-s")){
-            printf("SOLUÇÃO CRESCENTE\n");
+            crescente = 1;
         }
 
         if(!strcmp(argv[i], "-i")){
@@ -272,24 +292,18 @@ int main(int argc, char *argv[]){
 
     }
 
-    // char urlEntrada[] = "C:\\Users\\WINDOWS\\Downloads\\Bat1\\instances\\exemp.mtx";
-
     GRAFO * g = NULL;
     g = criaGrafoArquivo(urlEntrada, g);
 
     if(g!=NULL){
-        imprimeGrafo(g);
-
         int agm[g->num_verts];
+        int custo = 0;
 
-        //O vinicial é passado -1 por causa da relação com o vetor agm.
-        //onde agm[0] = 1; agm[1] = 1 etc...
-        algPrim(g,vinicial, agm);
+        algPrim(g,vinicial, agm, &custo);
+        imprimeGrafoArquivo(urlSaida, agm, g->num_verts, custo, crescente);
 
         liberaGrafo(g);
     }
-
-    
 
     return 0;
 }
