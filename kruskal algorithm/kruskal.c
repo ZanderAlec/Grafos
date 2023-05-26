@@ -301,13 +301,13 @@ int main(int argc, char *argv[]){
     g = criaGrafoArquivo(urlEntrada, g);
 
     if(g!=NULL){
-
-        int agm[g->num_verts];
+        size_t tam = g->num_verts;
+        int agm[tam];
         int custo = 0;
 
         encontraAgmKruskal(g, agm, &custo);
 
-        imprimeGrafoArquivo(urlSaida, agm, g->num_verts, custo, crescente);
+        imprimeGrafoArquivo(urlSaida, agm, tam, custo, crescente);
 
         liberaGrafo(g);        
     }

@@ -156,6 +156,9 @@ GRAFO * adicionaVerticeAresta(int valorPai, int valorFilho, int peso, GRAFO * g)
     lista_adjacencias * lfilho = g->lista_vertices[vFilho].primeiro;
     g->lista_vertices[vFilho].primeiro = insereAdjacencia(lfilho, valorPai, peso);
 
+    free(lpai);
+    free(lfilho);
+
     return g;
 }
 
