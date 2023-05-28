@@ -9,21 +9,6 @@ struct priori{
     struct priori * prox;
 }prioridade;
 
-//Solicita os valores e preenche o grafo:
-GRAFO * pedeValores(GRAFO * g){
-
-    int vPai = 0, vFilho = 0, peso = 0;
-
-    for(int i = 1; i <= g->num_arestas; i++){
-        printf("Informe o valor do vertice pai, vertice filho e peso da arestas: ");
-        scanf("%d %d %d", &vPai, &vFilho, &peso);
-
-        g = adicionaVerticeAresta(vPai, vFilho, peso, g);
-
-    }
-
-    return g;
-}
 
 //Preenche todos os índices do vetor com "-1"
 void limpaVetor(int vet[], int tam){
@@ -94,24 +79,24 @@ GRAFO * criaGrafoArquivo(char urlent[],GRAFO * g){
 
     FILE * file;
 
-    file = fopen(urlent, "r");
+    file = fopen(url, "r");
 
     if(file == NULL){
         printf("Não foi possível abrir o arquivo");
         return 0;
     }
 
-    int i, x = 0, y = 0,z = 0;
+    int i = 0, x = 0, y = 0,z = 0;
     fscanf(file, "%d %d", &x, &i);
-
-    g = criaGrafo(x,y);
+    
+    g = criaGrafo(x,i);
 
     for(int j = 0; j<i+1; j++){
         if(j == 0){
 
         }else{
             fscanf(file, "%d %d %d\n", &x, &y, &z);
-             adicionaVerticeAresta(x,y,z, g);
+            adicionaVerticeAresta(x,y,z, g);
         }
     }
 
@@ -122,6 +107,8 @@ GRAFO * criaGrafoArquivo(char urlent[],GRAFO * g){
 //Converte um valor inteiro para string
 char *  convertIntToChar ( int value, char * str )
 {
+    memset(str, 0, 4);
+
     char temp;
     int i =0;
     while (value > 0) {
@@ -174,7 +161,7 @@ int imprimeGrafoArquivo(char urlSaida[], int agm[], int num_verts, int custo, in
             for(int j = 0; j<num_verts; j++){
                 if(agm[j] == i){
                     fprintf(file, "(");
-                    char aresta[2];
+                    char aresta[4];
                     convertIntToChar(i+1, aresta);
                     fputs(aresta, file);
                     fprintf(file, ",");
@@ -187,7 +174,7 @@ int imprimeGrafoArquivo(char urlSaida[], int agm[], int num_verts, int custo, in
     }else{
         for(int i = 0; i < num_verts; i++){
             fprintf(file, "(");
-            char aresta[2];
+            char aresta[4];
             convertIntToChar(agm[i]+1, aresta);
             fputs(aresta, file);
             fprintf(file, ",");
@@ -267,8 +254,7 @@ void algPrim(GRAFO * g, int origem, int pai[], int *custo){
 int main(int argc, char *argv[]){
 
     int vinicial = 1, crescente = 0;
-    char urlEntrada[150];
-    char urlSaida[150];
+    char urlEntrada[150],  urlSaida[150];
 
     for(int i = 0; i < argc; i++){
         if(!strcmp(argv[i], "-h")){
@@ -294,6 +280,7 @@ int main(int argc, char *argv[]){
     }
 
     GRAFO * g = NULL;
+
     g = criaGrafoArquivo(urlEntrada, g);
 
     if(g!=NULL){
@@ -302,6 +289,7 @@ int main(int argc, char *argv[]){
         int custo = 0;
 
         algPrim(g,vinicial, agm, &custo);
+
         imprimeGrafoArquivo(urlSaida, agm,tam, custo, crescente);
 
         liberaGrafo(g);

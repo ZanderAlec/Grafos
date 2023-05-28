@@ -47,6 +47,8 @@ GRAFO * criaGrafoArquivo(char urlent[],GRAFO * g){
 //Converte um valor inteiro para string
 char *  convertIntToChar ( int value, char * str )
 {
+    memset(str, 0, 4);
+
     char temp;
     int i =0;
     while (value > 0) {
@@ -94,6 +96,7 @@ int buscaValorVetor(int v[], int tam, int valor){
 //Essa função procura um caminho entre dois vértices. Retorna 1(Se existir) ou 0(Se não existir)
 //v0 = vertice inicial, vi = objetivo, percorridos = vetor com tamanho igual número de vertices no grafo.
 int existeCaminho(GRAFO * g, int v0, int vi, int percorridos[]){
+
         
          //Verifica se o valor passado é igual ao buscado
         if(v0 == vi){
@@ -140,78 +143,126 @@ void limpaVetor(int vet[], int tam){
 
 //Encontra a árvore geradora mínima(agm), a partir de um grafo direcionado e conexo
 //Utilizada o algorítmo de kruskal.
-void encontraAgmKruskal(GRAFO * g, int vagm[], int *custo){
+void encontraAgmKruskal(GRAFO * g, int agm[], int *custo){
 
-    limpaVetor(vagm, g->num_verts);
+    int num_verts = g->num_verts;
+    int arvAgm[num_verts];
+    int menorPeso = 0, origem = 0, destino = 0;
 
-    GRAFO * agm = criaGrafo(g->num_verts, g->num_arestas);
+    limpaVetor(agm, num_verts);
+    for(int i = 0; i < num_verts; i++){
+        arvAgm[i] = i;
+    }
 
-    //Roda até não ter mais vertices não adicionados à agm
-    while(1){
-        //aresta
-        int v1 = 0 , v2 = 0;
-        int menorPeso = 0;
+    agm[0] = 0;
 
-        //Percorre todos as arestas do grafo procurando a com menor peso(que já não foi adicionada)
-        for(int i = 0; i<g->num_verts; i++){
-            lista_adjacencias * l = g->lista_vertices[i].primeiro;
-            
-            //Percorre todos os filhos do vertice atual
-            while(l){
+    while(1){   
+        int primeiro = 1;
 
-                if(menorPeso == 0){
-                    menorPeso = l->peso;
-                }
+        for(int i = 0; i<num_verts; i++){
+            printf("i: %d | i+1: %d\n", i, i+1);
 
-                if(menorPeso > l->peso || v1 == 0){
-                    
-                    int vtemp = g->lista_vertices[i].valor;
-                    int vtemp2 = l->valor;
-                    
-                    //vetor usado na função existe caminho
-                    int percorridos[6];
-                    zeraVetor(percorridos, 6);
+            int vertAtual = buscaVertice(i+1, g);
 
-                    //Verifica se existe caminho entre os dois vértices
-                    int resultado = existeCaminho(agm, vtemp, vtemp2, percorridos);
+            // printf("vertAtual: %d\n", vertAtual);
 
-                    //Se não existir caminho, a aresta atual pode ser utilizada.
-                    if(!resultado){
-                        
-                        v1 = vtemp;
-                        v2 = vtemp2;
+            lista_adjacencias * l = g->lista_vertices[vertAtual].primeiro;
+            lista_adjacencias * lista = g->lista_vertices[vertAtual].primeiro;
+
+            while(lista != NULL){
+                // printf("%d ", lista->valor);
+                lista = lista->proximo;
+            }
+
+            printf("\n");
+
+            while(l != NULL){
+
+                // printf("l atual: %d\n", l->valor);
+                // printf("i atual: %d\n", i);
+                // printf("arvAgm[%d]: %d\n", i, arvAgm[i]);
+                // printf("arvAgm[%d]: %d\n", l->valor-1, arvAgm[l->valor-1]);
+
+                if(arvAgm[i] != arvAgm[l->valor-1]){
+                     printf("são diferentes\n");
+                    printf("%d != %d  ", i, arvAgm[l->valor-1]);
+                    printf("\n");
+
+                    for(int i = 0; i< num_verts; i++){
+                        printf("%d = %d", i, arvAgm[i]);
+                    }
+                    printf("\n");
+                   
+                    if(primeiro){
+                        // printf("é o primerio valor\n");
                         menorPeso = l->peso;
+                        origem = i;
+                        destino = l->valor;
+                        primeiro = 0;
+
+                    }else{
+
+                        if(menorPeso > l->peso){
+                            menorPeso = l->peso;
+                            origem = i;
+                            destino = l->valor;
+                        }
                     }
                 }
-
-                l = l->proximo;    
+                
+                // printf("menorPeso: %d\n", menorPeso);
+                // printf("origem: %d\n", origem);
+                // printf("destino: %d\n", destino);
+            
+                l = l->proximo;
             }
+
+            printf("menorPeso: %d\n", menorPeso);
+                printf("origem: %d\n", origem);
+                printf("destino: %d\n", destino);
         }
 
-        //Não existem mais vértices que não foram visitados. Encerra.
-        if(v1 == 0){
-            break;
-        }
+        printf("SAIU DO LOOP \n");
+        printf("menorPeso: %d\n", menorPeso);
+        printf("origem: %d\n", origem);
+        printf("destino: %d\n", destino);
 
-        if(vagm[v2-1] == -1){
-             vagm[v2-1] = v1;
+        if(primeiro) break;
+
+        if(agm[origem] == -1){
+            agm[origem] = destino;
         }else{
-             vagm[v1-1] = v2;
+            agm[destino-1] = origem+1;
         }
 
         *custo += menorPeso;
+        printf("custo : %d\n", *custo);
 
-        //Caso encontrou vertices não visitados adiciona eles à agm:
-        adicionaVerticeAresta(v1,v2,menorPeso,agm);
+        //Conecta as diferentes árvores:
+        for(int i = 0; i< num_verts; i++){
+            if(arvAgm[i] == arvAgm[destino-1]){
+                arvAgm[i] = arvAgm[origem];
+            }
+        }
     }
 
-    liberaGrafo(agm);
+    printf("custo : %d\n", *custo);
+    printf("arvAGM====================================\n");
+    for(int i = 0; i< num_verts; i++){
+            printf("%d = %d\n", i, arvAgm[i]);
+    }
 
+     printf("AGM====================================\n");
+     for(int i = 0; i< num_verts; i++){
+            printf("%d = %d\n", i, agm[i]);
+    }
 }
 
 
 //Recebe um vetor com a agm e escreve num arquivo.
 int imprimeGrafoArquivo(char urlSaida[], int agm[], int num_verts, int custo, int crescente){
+    printf("entrei no imprime algo\n");
+
     int size = 0;
 
     for(int i = 0; urlSaida[i] != '\0'; i++){
@@ -238,7 +289,7 @@ int imprimeGrafoArquivo(char urlSaida[], int agm[], int num_verts, int custo, in
             for(int j = 0; j<num_verts; j++){
                 if(agm[j] == i){
                     fprintf(file, "(");
-                    char aresta[2];
+                    char aresta[4];
                     convertIntToChar(agm[j], aresta);
                     fputs(aresta, file);
                     fprintf(file, ",");
@@ -250,9 +301,9 @@ int imprimeGrafoArquivo(char urlSaida[], int agm[], int num_verts, int custo, in
         }
     }else{
         for(int i = 0; i < num_verts; i++){
-            if(agm[i] != -1){
+            if(agm[i] != i){
                 fprintf(file, "(");
-                char aresta[2];
+                char aresta[4];
                 convertIntToChar(agm[i], aresta);
                 fputs(aresta, file);
                 fprintf(file, ",");
@@ -296,17 +347,19 @@ int main(int argc, char *argv[]){
 
     }
 
-
     GRAFO * g = NULL;
     g = criaGrafoArquivo(urlEntrada, g);
 
+    imprimeGrafo(g);
+
     if(g!=NULL){
+
         size_t tam = g->num_verts;
+
         int agm[tam];
         int custo = 0;
 
         encontraAgmKruskal(g, agm, &custo);
-
         imprimeGrafoArquivo(urlSaida, agm, tam, custo, crescente);
 
         liberaGrafo(g);        

@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+
+
 //Estrutura do grafo---------------------------------
 
 typedef struct adj{
@@ -24,6 +26,8 @@ typedef struct grafo{
     int num_arestas;
     vertice * lista_vertices;
 }GRAFO;
+
+void imprimeGrafo(GRAFO * g);
 
 //Inicia o grafo.
 GRAFO * criaGrafo(int numVerts, int numArestas){
@@ -85,22 +89,15 @@ lista_adjacencias * criaAdjacencia(int valor, int peso){
 
 //Adiciona a adjacencia a lista de adjacencias do vertice
 lista_adjacencias * insereAdjacencia(lista_adjacencias * lista, int valor, int peso){
-    
-    // printf("ENTREI NO INSERE ADJACENCIA\n");
-    // printf("valor: %d\n", valor);
 
     lista_adjacencias * adj = criaAdjacencia(valor , peso);
 
     //Se a lista estiver vazia, adiciona o elemento como primeiro
     if(lista == NULL){
-        // printf("lista TAVA VAZIAR\n");
         lista = adj;
     
     //Se não estiver, procura um espaço vazio e adiciona:
     }else{
-
-        // printf("lista JÁ TINHA COISA\n");
-
         lista_adjacencias * l = lista;
 
         while(l->proximo != NULL){
@@ -109,6 +106,7 @@ lista_adjacencias * insereAdjacencia(lista_adjacencias * lista, int valor, int p
 
         l->proximo = adj;
     }
+    
     return lista;
 }
 
@@ -131,35 +129,26 @@ int  buscaVertice(int valorBuscado, GRAFO * g){
 }
 
 // //Adiciona os vertices e as arestas ao grafo
-GRAFO * adicionaVerticeAresta(int valorPai, int valorFilho, int peso, GRAFO * g){
+void adicionaVerticeAresta(int valorPai, int valorFilho, int peso, GRAFO * g){
 
-    int vPai = buscaVertice(valorPai, g);
-  
-    // //Se o pai não existe, cria-o.
-    if(vPai == -1){
+    int vpai = buscaVertice(valorPai, g);
+
+    if(vpai == -1){
         insereVertice(g, valorPai);
-        vPai = buscaVertice(valorPai, g);
+        vpai = buscaVertice(valorPai, g);
     }
 
-    int  vFilho = buscaVertice(valorFilho, g);
-
-    // //Se o filho não existe, cria-o.
-    if(vFilho == -1){
+    int vfilho = buscaVertice(valorFilho, g);
+    
+    if(vfilho == -1){
         insereVertice(g, valorFilho);
-        vFilho = buscaVertice(valorFilho, g);
+        vfilho = buscaVertice(valorFilho, g);
     }
 
-    //Adiciona as adjacencias, tanto no pai quanto no filho, pois o grafo não é direcionado.
-    lista_adjacencias * lpai = g->lista_vertices[vPai].primeiro;
-    g->lista_vertices[vPai].primeiro = insereAdjacencia(lpai, valorFilho, peso);
+    g->lista_vertices[vpai].primeiro =  insereAdjacencia(g->lista_vertices[vpai].primeiro, valorFilho, peso);
+   
+    g->lista_vertices[vfilho].primeiro =  insereAdjacencia(g->lista_vertices[vfilho].primeiro, valorPai, peso);
 
-    lista_adjacencias * lfilho = g->lista_vertices[vFilho].primeiro;
-    g->lista_vertices[vFilho].primeiro = insereAdjacencia(lfilho, valorPai, peso);
-
-    free(lpai);
-    free(lfilho);
-
-    return g;
 }
 
 void imprimeGrafo(GRAFO * g){
